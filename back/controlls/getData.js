@@ -1,5 +1,5 @@
-import conexion from "../bd.js";  // Importa la conexión a la base de datos
-import bcrypt from "bcrypt";      // Importa bcrypt para comparar hashes
+import conexion from "../bd.js"; // Importa la conexión a la base de datos
+import bcrypt from "bcrypt"; // Importa bcrypt para comparar hashes
 
 export default async function getData(req, res) {
   try {
@@ -8,14 +8,15 @@ export default async function getData(req, res) {
 
     // 🔹 Si no hay cookies, denegar acceso
     if (!cookies || Object.keys(cookies).length === 0) {
-      return res.status(401).json({ mensaje: "No hay cookies, acceso denegado." });
+      return res
+        .status(401)
+        .json({ mensaje: "No hay cookies, acceso denegado." });
     }
 
     let usuarioId = null; // Aquí guardaremos el ID del usuario si la cookie es válida
 
     // 🔹 Iterar sobre todas las cookies para encontrar la que corresponde al usuario
     for (const nombreCookie in cookies) {
-
       // 🔹 Comparar el nombre de la cookie con la cadena "id" hasheada
       const esMatch = await bcrypt.compare("id", nombreCookie);
 
@@ -25,10 +26,13 @@ export default async function getData(req, res) {
 
         // 🔹 Iteramos sobre los usuarios y comparamos el valor de la cookie con su ID hasheado
         for (const u of usuarios) {
-          const idMatch = await bcrypt.compare(u.id.toString(), cookies[nombreCookie]);
+          const idMatch = await bcrypt.compare(
+            u.id.toString(),
+            cookies[nombreCookie]
+          );
           if (idMatch) {
             usuarioId = u.id; // Guardamos el ID del usuario válido
-            break;            // Salimos del loop si encontramos coincidencia
+            break; // Salimos del loop si encontramos coincidencia
           }
         }
         break; // Salimos del loop de cookies una vez que encontramos la cookie correcta
@@ -37,12 +41,14 @@ export default async function getData(req, res) {
 
     // 🔹 Si no encontramos un usuario válido, denegamos el acceso
     if (!usuarioId) {
-      return res.status(401).json({ mensaje: "Cookie inválida o usuario no encontrado." });
+      return res
+        .status(401)
+        .json({ mensaje: "Cookie inválida o usuario no encontrado." });
     }
 
     // 🔹 Consultar los datos del usuario usando el ID encontrado
     const [resultado] = await conexion.query(
-      "SELECT nombre, apellido, telefono, fecha_creacion FROM usuarios WHERE id = ?",
+      "SELECT email, nombre, apellido, telefono, fecha_creacion FROM usuarios WHERE id = ?",
       [usuarioId]
     );
 
@@ -53,7 +59,6 @@ export default async function getData(req, res) {
 
     // 🔹 Si todo está correcto, devolver los datos del usuario
     return res.status(200).json({ usuario: resultado[0] });
-
   } catch (error) {
     // 🔹 Capturar cualquier error inesperado y devolver 500
     console.error("Error en getData:", error);
